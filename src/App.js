@@ -1,5 +1,5 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import About from './pages/About';
 import Team from './pages/Team';
@@ -21,10 +21,7 @@ function App() {
         <Route path="/careers" element={<Careers />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/clientportal" element={<ClientPortal />} />
-
-
-
-
+        <Route path="/newsroom" element={<Newsroom />} />
       </Routes>
     </Router>
   );

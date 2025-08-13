@@ -1,31 +1,34 @@
-import { Link } from 'react-router-dom';
-
 function Navbar() {
-  return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '10px 20px',
-      backgroundColor: '#f2f2f2',
-      position: 'sticky',
-      top: 0,
-    }}>
-      <h2>
-        <Link to="/" style={{ textDecoration: 'none', color: 'black' }}>
-          CPA Firm
-        </Link>
-      </h2>
-      <div style={{ display: 'flex', gap: '15px' }}>
-        <Link to="/about">About</Link>
-        <Link to="/services">Services</Link>
-        <Link to="/team">Team</Link>
-        <Link to="/careers">Careers</Link>
-        <Link to="/contact">Contact</Link>
-        <Link to="/newsroom">Newsroom</Link>
-      </div>
-    </div>
-  );
-}
-
-export default Navbar;
+    return (
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          
+          {/* Logo */}
+          <a href="/" className="text-xl font-bold tracking-tight">
+            <span className="text-sky-600">BlueOak</span> CPA
+          </a>
+  
+          {/* Nav Links */}
+          <nav className="hidden md:flex items-center gap-5 text-slate-700 text-sm font-medium">
+            <a href="/about" className="hover:text-sky-600 transition-colors">About Us</a>
+            <a href="/team" className="hover:text-sky-600 transition-colors">Team</a>
+            <a href="/services" className="hover:text-sky-600 transition-colors">Services</a>
+            <a href="/careers" className="hover:text-sky-600 transition-colors">Careers</a>
+            <a href="/clientportal" className="hover:text-sky-600 transition-colors">Client Portal</a>
+            <a href="/newsroom" className="hover:text-sky-600 transition-colors">Newsroom</a>
+          </nav>
+  
+          {/* Contact Button */}
+          <a
+            href="/contact"
+            className="bg-sky-600 text-white px-4 py-2 rounded-full hover:bg-sky-700 transition"
+          >
+            Get in touch
+          </a>
+        </div>
+      </header>
+    );
+  }
+  
+  export default Navbar;
+  
