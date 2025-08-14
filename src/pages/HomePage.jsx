@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 function HomePage() {
   const [showMoreNews, setShowMoreNews] = useState(false);
-  const [showTop, setShowTop] = useState(false);
+  const [showButtons, setShowButtons] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setShowTop(window.scrollY > 300);
+    const onScroll = () => setShowButtons(window.scrollY > 300);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -89,15 +90,22 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Back to top */}
-      {showTop && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-6 right-6 bg-slate-800 text-white px-3 py-2 rounded-lg text-sm hover:bg-slate-700"
-          aria-label="Back to top"
-        >
-          ↑ Top
-        </button>
+      {/* Fixed Navigation Buttons */}
+      {showButtons && (
+        <div className="fixed bottom-6 right-6 flex flex-col gap-3">
+          <Link
+            to="/about"
+            className="bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow hover:bg-sky-700 transition"
+          >
+            Next →
+          </Link>
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow hover:bg-sky-700 transition"
+          >
+            ↑ Top
+          </button>
+        </div>
       )}
 
       {/* Footer */}
