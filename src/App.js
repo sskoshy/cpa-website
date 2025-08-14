@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/HomePage";
 import About from "./pages/About";
@@ -9,9 +9,10 @@ import ClientPortal from "./pages/ClientPortal";
 import Newsroom from "./pages/Newsroom";
 import Contact from "./pages/Contact";
 
-export default function App() {
+function App() {
+  const basename = process.env.NODE_ENV === "production" ? "/cpa-website" : "/";
   return (
-    <BrowserRouter>
+    <Router basename={basename}>
       <Navbar />
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -22,7 +23,9 @@ export default function App() {
         <Route path="/clientportal" element={<ClientPortal />} />
         <Route path="/newsroom" element={<Newsroom />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
+export default App;
