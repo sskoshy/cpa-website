@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer"; // ✅ new import
 import HomePage from "./pages/HomePage";
 import About from "./pages/About";
 import Services from "./pages/Services";
@@ -25,7 +26,9 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <Footer /> {/* ✅ global footer now only appears once */}
     </Router>
   );
 }
+
 export default App;

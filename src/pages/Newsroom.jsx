@@ -1,68 +1,172 @@
-import { useState } from "react";
+// src/pages/Newsroom.jsx
+import { useState, useMemo } from "react";
+import PageNav from "../components/PageNav";
+
+// ✅ Move articles outside the component so they don’t reinitialize every render
+const allArticles = [
+  { title: "CPA Firm Recognized as Top Accounting Leader", date: "Aug 1, 2025", summary: "Honored for excellence in client service and standards.", category: "Consulting" },
+  { title: "Webinar Recap: Mid-Year Tax Planning Tips", date: "Jul 22, 2025", summary: "Deductions, estimated payments, and planning ahead for year-end.", category: "Tax" },
+  { title: "Guide: Preparing for Your First Audit", date: "Jul 10, 2025", summary: "Checklist to get organized and reduce audit stress.", category: "Audit" },
+  { title: "Article: Choosing a Business Entity", date: "Aug 05, 2025", summary: "LLC vs. S-Corp basics for founders.", category: "Consulting" },
+  { title: "Tax Alert: Q3 Deadlines", date: "Aug 07, 2025", summary: "Key upcoming dates to track.", category: "Tax" },
+];
+
+const CATS = ["All", "Tax", "Audit", "Consulting"];
 
 function Newsroom() {
-  const allArticles = [
-    { title: "CPA Firm Recognized as Top Accounting Leader", date: "Aug 1, 2025", summary: "Honored for excellence in client service and standards.", category: "Consulting" },
-    { title: "Webinar Recap: Mid-Year Tax Planning Tips", date: "Jul 22, 2025", summary: "Deductions, estimated payments, and planning ahead for year-end.", category: "Tax" },
-    { title: "Guide: Preparing for Your First Audit", date: "Jul 10, 2025", summary: "Checklist to get organized and reduce audit stress.", category: "Audit" },
-    { title: "Article: Choosing a Business Entity", date: "Aug 05, 2025", summary: "LLC vs. S-Corp basics for founders.", category: "Consulting" },
-    { title: "Tax Alert: Q3 Deadlines", date: "Aug 07, 2025", summary: "Key upcoming dates to track.", category: "Tax" },
-  ];
-
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
+  const [open, setOpen] = useState({});
 
-  const filtered = allArticles.filter((a) => {
-    const matchesCat = cat === "All" || a.category === cat;
-    const matchesQ =
-      !q ||
-      a.title.toLowerCase().includes(q.toLowerCase()) ||
-      a.summary.toLowerCase().includes(q.toLowerCase());
-    return matchesCat && matchesQ;
-  });
+  const lorem =
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent commodo, lacus in feugiat efficitur, ipsum lectus gravida nunc, nec posuere lorem justo ac erat. Integer vitae aliquam ligula. Sed id lacus vel dui ultricies congue. Nulla facilisi. Curabitur posuere dictum semper.";
+
+  // ✅ only depends on q and cat
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return allArticles.filter((a) => {
+      const matchesCat = cat === "All" || a.category === cat;
+      const matchesQ =
+        !term ||
+        a.title.toLowerCase().includes(term) ||
+        a.summary.toLowerCase().includes(term);
+      return matchesCat && matchesQ;
+    });
+  }, [q, cat]);
+
+  const toggle = (i) => setOpen((o) => ({ ...o, [i]: !o[i] }));
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-16">
-      <div className="max-w-4xl mx-auto p-4 sm:p-6">
-        <h1 className="text-3xl font-bold text-center mb-6">Newsroom</h1>
+    <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-blue-800 to-sky-700 pt-16 pb-28 relative text-white">
+      {/* subtle glows */}
+      <div className="pointer-events-none -z-10 absolute -top-40 -left-24 w-[28rem] h-[28rem] bg-white/10 blur-3xl rounded-full" />
+      <div className="pointer-events-none -z-10 absolute -bottom-48 -right-32 w-[32rem] h-[32rem] bg-white/10 blur-3xl rounded-full" />
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-8">
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+        {/* Header */}
+        <header className="text-center mt-6 mb-8">
+          <h1 className="text-4xl sm:text-5xl font-bold">Newsroom</h1>
+          <div className="w-20 h-1 bg-white/70 mx-auto mt-3 rounded" />
+          <p className="mt-4 text-white/90 max-w-2xl mx-auto">
+            Insights, updates, and practical guides from the BlueOak team.
+          </p>
+        </header>
+
+        {/* Search + category pills */}
+        <div className="flex flex-col items-stretch sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             type="text"
-            placeholder="Search..."
-            className="border border-slate-200 rounded p-2 flex-1 focus:outline-none focus:ring-2 focus:ring-sky-300"
+            placeholder="Search articles…"
+            className="border border-white/30 bg-white/15 text-white placeholder-white/70 backdrop-blur rounded-lg p-2.5 flex-1 focus:outline-none focus:ring-2 focus:ring-sky-300"
           />
-          <select
-            value={cat}
-            onChange={(e) => setCat(e.target.value)}
-            className="border border-slate-200 rounded p-2"
-          >
-            <option>All</option>
-            <option>Tax</option>
-            <option>Audit</option>
-            <option>Consulting</option>
-          </select>
-        </div>
 
-        {filtered.map((a, i) => (
-          <div key={i} className="bg-white rounded border border-slate-200 shadow-sm p-5 mb-4 hover:shadow-md transition">
-            <div className="flex items-start justify-between gap-3">
-              <h2 className="text-xl font-semibold text-slate-900">{a.title}</h2>
-              <span className="text-xs px-2 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-100">{a.category}</span>
-            </div>
-            <p className="text-sm text-slate-500 mt-1">{a.date}</p>
-            <p className="mt-3 text-slate-700">{a.summary}</p>
-            <button type="button" className="mt-2 text-sky-700 hover:underline">Read more</button>
+          <div className="flex flex-wrap gap-2">
+            {CATS.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCat(c)}
+                className={`px-3 py-1.5 rounded-full text-sm transition
+                  ${cat === c
+                    ? "bg-white text-indigo-900 font-semibold"
+                    : "bg-white/10 border border-white/30 hover:bg-white/20"}`}
+              >
+                {c}
+              </button>
+            ))}
           </div>
-        ))}
-
-        <div className="mt-10 flex justify-between">
-          <a href="/clientportal" className="inline-flex items-center bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">← Back</a>
-          <a href="/contact" className="inline-flex items-center bg-sky-600 text-white px-4 py-2 rounded hover:bg-sky-700">Next →</a>
         </div>
+
+        {/* Results info */}
+        <div className="mb-4 text-white/80 text-sm">
+          Showing <span className="font-semibold">{filtered.length}</span>{" "}
+          {filtered.length === 1 ? "result" : "results"}
+          {cat !== "All" && (
+            <>
+              {" "}
+              in <span className="font-semibold">{cat}</span>
+            </>
+          )}
+          {q && (
+            <>
+              {" "}
+              for “<span className="font-semibold">{q}</span>”
+            </>
+          )}
+        </div>
+
+        {/* Article cards */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {filtered.map((a, i) => (
+            <article
+              key={i}
+              className="bg-white/80 backdrop-blur rounded-2xl border border-white/60 shadow hover:shadow-md transition text-slate-900"
+            >
+              {/* Optional cover bar */}
+              <div className="h-1.5 rounded-t-2xl bg-gradient-to-r from-sky-600 to-indigo-800" />
+
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="text-lg sm:text-xl font-semibold text-slate-900">
+                    {a.title}
+                  </h2>
+                  <span className="shrink-0 text-[11px] px-2 py-1 rounded-full bg-sky-100 text-sky-800 border border-sky-200">
+                    {a.category}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">{a.date}</p>
+                <p className="mt-3 text-slate-800">{a.summary}</p>
+
+                {open[i] && (
+                  <p className="mt-3 text-slate-700 text-sm">{lorem}</p>
+                )}
+
+                <div className="mt-4 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => toggle(i)}
+                    className="text-sky-800 hover:underline text-sm font-medium"
+                  >
+                    {open[i] ? "Read less" : "Read more"}
+                  </button>
+
+                  {/* lightweight “share” affordance (non-functional placeholder) */}
+                  <button
+                    type="button"
+                    className="text-slate-600 hover:text-slate-800 text-xs"
+                    title="Copy link (demo)"
+                    onClick={() =>
+                      navigator.clipboard?.writeText(window.location.href)
+                    }
+                  >
+                    Copy link
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        {/* Empty state */}
+        {filtered.length === 0 && (
+          <div className="mt-10 bg-white/80 backdrop-blur rounded-2xl border border-white/60 shadow p-8 text-center text-slate-900">
+            <p className="font-semibold">No articles found.</p>
+            <p className="text-slate-600 text-sm mt-1">
+              Try a different search term or choose another category.
+            </p>
+          </div>
+        )}
       </div>
+
+      {/* Back -> Careers, Next -> Client Portal with clear labels */}
+      <PageNav
+        back="/careers"
+        backLabel="Back: Careers"
+        next="/clientportal"
+        nextLabel="Next: Client Portal"
+        always
+      />
     </div>
   );
 }
