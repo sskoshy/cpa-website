@@ -1,8 +1,7 @@
-// src/pages/Newsroom.jsx
 import { useState, useMemo } from "react";
 import PageNav from "../components/PageNav";
 
-// ✅ Move articles outside the component so they don’t reinitialize every render
+// Keep articles outside the component so they don’t reinitialize every render
 const allArticles = [
   { title: "CPA Firm Recognized as Top Accounting Leader", date: "Aug 1, 2025", summary: "Honored for excellence in client service and standards.", category: "Consulting" },
   { title: "Webinar Recap: Mid-Year Tax Planning Tips", date: "Jul 22, 2025", summary: "Deductions, estimated payments, and planning ahead for year-end.", category: "Tax" },
@@ -21,7 +20,7 @@ function Newsroom() {
   const lorem =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent commodo, lacus in feugiat efficitur, ipsum lectus gravida nunc, nec posuere lorem justo ac erat. Integer vitae aliquam ligula. Sed id lacus vel dui ultricies congue. Nulla facilisi. Curabitur posuere dictum semper.";
 
-  // ✅ only depends on q and cat
+  // only depends on q and cat
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
     return allArticles.filter((a) => {
@@ -37,10 +36,24 @@ function Newsroom() {
   const toggle = (i) => setOpen((o) => ({ ...o, [i]: !o[i] }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-blue-800 to-sky-700 pt-16 pb-28 relative text-white">
-      {/* subtle glows */}
-      <div className="pointer-events-none -z-10 absolute -top-40 -left-24 w-[28rem] h-[28rem] bg-white/10 blur-3xl rounded-full" />
-      <div className="pointer-events-none -z-10 absolute -bottom-48 -right-32 w-[32rem] h-[32rem] bg-white/10 blur-3xl rounded-full" />
+    <div className="relative min-h-screen pt-16 pb-28 text-white overflow-hidden">
+      {/* Your original gradient, kept the same */}
+      <div className="absolute inset-0 -z-20 bg-gradient-to-b from-indigo-900 via-blue-800 to-sky-700" />
+
+      {/* Soft background image under the gradient */}
+      <div
+        className="absolute inset-0 -z-10 bg-cover bg-center opacity-20"
+        // You can replace this with a local file: style={{ backgroundImage: "url('/news-bg.jpg')" }}
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=1600&auto=format&fit=crop')",
+        }}
+        aria-hidden="true"
+      />
+
+      {/* subtle glows (kept) */}
+      <div className="pointer-events-none absolute -top-40 -left-24 w-[28rem] h-[28rem] bg-white/10 blur-3xl rounded-full -z-10" />
+      <div className="pointer-events-none absolute -bottom-48 -right-32 w-[32rem] h-[32rem] bg-white/10 blur-3xl rounded-full -z-10" />
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
@@ -67,10 +80,11 @@ function Newsroom() {
               <button
                 key={c}
                 onClick={() => setCat(c)}
-                className={`px-3 py-1.5 rounded-full text-sm transition
-                  ${cat === c
+                className={`px-3 py-1.5 rounded-full text-sm transition ${
+                  cat === c
                     ? "bg-white text-indigo-900 font-semibold"
-                    : "bg-white/10 border border-white/30 hover:bg-white/20"}`}
+                    : "bg-white/10 border border-white/30 hover:bg-white/20"
+                }`}
               >
                 {c}
               </button>
@@ -96,21 +110,17 @@ function Newsroom() {
           )}
         </div>
 
-        {/* Article cards */}
+        {/* Article cards — fully opaque white */}
         <div className="grid gap-6 md:grid-cols-2">
           {filtered.map((a, i) => (
             <article
               key={i}
-              className="bg-white/80 backdrop-blur rounded-2xl border border-white/60 shadow hover:shadow-md transition text-slate-900"
+              className="bg-white rounded-2xl border border-slate-200 shadow hover:shadow-md transition text-slate-900"
             >
-              {/* Optional cover bar */}
               <div className="h-1.5 rounded-t-2xl bg-gradient-to-r from-sky-600 to-indigo-800" />
-
               <div className="p-5">
                 <div className="flex items-start justify-between gap-3">
-                  <h2 className="text-lg sm:text-xl font-semibold text-slate-900">
-                    {a.title}
-                  </h2>
+                  <h2 className="text-lg sm:text-xl font-semibold text-slate-900">{a.title}</h2>
                   <span className="shrink-0 text-[11px] px-2 py-1 rounded-full bg-sky-100 text-sky-800 border border-sky-200">
                     {a.category}
                   </span>
@@ -118,9 +128,7 @@ function Newsroom() {
                 <p className="text-xs text-slate-500 mt-1">{a.date}</p>
                 <p className="mt-3 text-slate-800">{a.summary}</p>
 
-                {open[i] && (
-                  <p className="mt-3 text-slate-700 text-sm">{lorem}</p>
-                )}
+                {open[i] && <p className="mt-3 text-slate-700 text-sm">{lorem}</p>}
 
                 <div className="mt-4 flex items-center justify-between">
                   <button
@@ -130,15 +138,11 @@ function Newsroom() {
                   >
                     {open[i] ? "Read less" : "Read more"}
                   </button>
-
-                  {/* lightweight “share” affordance (non-functional placeholder) */}
                   <button
                     type="button"
                     className="text-slate-600 hover:text-slate-800 text-xs"
                     title="Copy link (demo)"
-                    onClick={() =>
-                      navigator.clipboard?.writeText(window.location.href)
-                    }
+                    onClick={() => navigator.clipboard?.writeText(window.location.href)}
                   >
                     Copy link
                   </button>
@@ -150,23 +154,16 @@ function Newsroom() {
 
         {/* Empty state */}
         {filtered.length === 0 && (
-          <div className="mt-10 bg-white/80 backdrop-blur rounded-2xl border border-white/60 shadow p-8 text-center text-slate-900">
+          <div className="mt-10 bg-whit
+          e rounded-2xl border border-slate-200 shadow p-8 text-center text-slate-900">
             <p className="font-semibold">No articles found.</p>
-            <p className="text-slate-600 text-sm mt-1">
-              Try a different search term or choose another category.
-            </p>
+            <p className="text-slate-600 text-sm mt-1">Try a different search term or choose another category.</p>
           </div>
         )}
       </div>
 
       {/* Back -> Careers, Next -> Client Portal with clear labels */}
-      <PageNav
-        back="/careers"
-        backLabel="Back: Careers"
-        next="/clientportal"
-        nextLabel="Next: Client Portal"
-        always
-      />
+      <PageNav back="/careers" backLabel="Back: Careers" next="/clientportal" nextLabel="Next: Client Portal" always />
     </div>
   );
 }

@@ -67,6 +67,7 @@ function Services() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-blue-800 to-sky-700 text-white pt-16 pb-28 relative">
+      
       {/* decorative background */}
       <div className="pointer-events-none -z-10 absolute -top-40 -left-32 w-96 h-96 bg-white/10 blur-3xl rounded-full" />
       <div className="pointer-events-none -z-10 absolute -bottom-40 -right-32 w-96 h-96 bg-white/10 blur-3xl rounded-full" />

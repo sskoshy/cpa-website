@@ -12,7 +12,17 @@ function About() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-blue-800 to-sky-700 text-white pt-16 px-6 pb-28 relative">
-      {/* soft glows */}
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 -z-20 bg-cover bg-center opacity-20"
+        style={{
+          backgroundImage:
+            "url('https://cdn.pixabay.com/photo/2016/10/18/21/22/desk-1759935_1280.jpg')",
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Soft glows */}
       <div
         className="pointer-events-none -z-10 absolute -top-40 -left-24 w-[28rem] h-[28rem] bg-white/10 blur-3xl rounded-full"
         aria-hidden="true"
@@ -88,4 +98,3 @@ function About() {
 }
 
 export default About;
-
