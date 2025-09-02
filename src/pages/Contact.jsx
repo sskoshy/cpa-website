@@ -1,24 +1,139 @@
 // src/pages/Contact.jsx
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import PageNav from "../components/PageNav";
 
+/**
+ * API base:
+ * - Dev proxy (recommended in local dev): leave REACT_APP_API_BASE unset and add
+ *   "proxy": "http://localhost:5001" in the frontend package.json
+ *   => requests go to relative paths like "/api/contact" and are proxied.
+ * - Direct URL: set REACT_APP_API_BASE (e.g. https://your-api.onrender.com)
+ */
+const RAW_BASE = (process.env.REACT_APP_API_BASE || "").trim().replace(/\/+$/, "");
+const withBase = (path) => (RAW_BASE ? `${RAW_BASE}${path}` : path);
+
 function Contact() {
-  const [msg, setMsg] = useState("");
+  // form state
+  const [firstName, setFirstName] = useState("");
+  const [lastName,  setLastName]  = useState("");
+  const [email,     setEmail]     = useState("");
+  const [phone,     setPhone]     = useState("");
+  const [msg,       setMsg]       = useState("");
+  const [loading,   setLoading]   = useState(false);
+
+  // status banner
+  const [status, setStatus] = useState({ type: null, text: "" });
+
   const max = 500;
 
-  // Update this to your real address if needed
+  // helpful hint if you try to call http from an https page (e.g., GitHub Pages)
+  const httpsMixedContentHint = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    const isHttpsPage = window.location.protocol === "https:";
+    const isHttpApi   = RAW_BASE && RAW_BASE.startsWith("http://");
+    if (isHttpsPage && isHttpApi) {
+      return "This page is HTTPS but your API base is HTTP. Browsers block mixed content. Use HTTPS for the API or test locally at http://localhost:3000 with a dev proxy.";
+    }
+    return "";
+  }, []);
+
   const address = "123 Main St, Suite 100, Sacramento, CA 95814";
   const gmapsQ = encodeURIComponent(address);
-  const embedSrc = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12762.685302792023!2d-121.496!3d38.581!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x809ad10a%3A0x0000000000000000!2s${gmapsQ}!5e=1!3m2!1sen!2sus!4v${Date.now()}`;
+  const embedSrc =
+    `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12762.685302792023!2d-121.496!3d38.581!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x809ad10a%3A0x0000000000000000!2s${gmapsQ}!5e=1!3m2!1sen!2sus!4v=${Date.now()}`;
+
+  const reset = () => {
+    setFirstName(""); setLastName(""); setEmail(""); setPhone(""); setMsg("");
+  };
+
+  const validate = () => {
+    if (!firstName.trim() || !lastName.trim()) return "Please enter your first and last name.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Please enter a valid email.";
+    if (!msg.trim()) return "Please enter a message.";
+    if (msg.length > max) return `Message must be ${max} characters or fewer.`;
+    return null;
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setStatus({ type: null, text: "" });
+
+    // local validation first
+    const problem = validate();
+    if (problem) {
+      setStatus({ type: "error", text: problem });
+      return;
+    }
+
+    // mixed-content guard (common on GitHub Pages)
+    if (httpsMixedContentHint) {
+      setStatus({ type: "error", text: httpsMixedContentHint });
+      return;
+    }
+
+    // build URL depending on whether REACT_APP_API_BASE is set
+    const url = withBase("/api/contact");
+    console.log("POST /api/contact →", url);
+
+    setLoading(true);
+    try {
+      // add a short timeout to avoid hanging errors
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 15000);
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+          email: email.trim(),
+          phone: phone.trim() || undefined,
+          subject: "Website Contact Form",
+          message: msg.trim(),
+        }),
+      });
+
+      clearTimeout(t);
+
+      // try to parse json, but don't crash if not json
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
+
+      if (!res.ok) {
+        // improve common errors
+        if (res.status === 404) {
+          throw new Error("Not found (404). Check that server mounts: app.use('/api', submissionsRouter) and router path is '/contact'.");
+        }
+        if (res.status === 500) {
+          throw new Error(data?.error || "Server error (500). See server logs.");
+        }
+        throw new Error(data?.message || data?.error || `Request failed with status ${res.status}.`);
+      }
+
+      setStatus({ type: "success", text: "Thanks! Your message was sent. We’ll get back within one business day." });
+      reset();
+    } catch (err) {
+      // network-level errors (CORS/offline/timeout) show up as TypeError or AbortError
+      const msg =
+        err?.name === "AbortError"
+          ? "The request timed out. Is the server running?"
+          : (err?.message || "Failed to send message. Check the Network tab for details.");
+
+      setStatus({ type: "error", text: msg });
+      console.error("Contact submit error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-blue-800 to-sky-700 text-white pt-16 px-6 pb-28 relative">
-      {/* soft glows to match home/about */}
+      {/* soft glows */}
       <div className="absolute -top-40 -left-24 w-[28rem] h-[28rem] bg-white/10 blur-3xl rounded-full" />
       <div className="absolute -bottom-48 -right-32 w-[32rem] h-[32rem] bg-white/10 blur-3xl rounded-full" />
 
       <div className="relative max-w-6xl mx-auto">
-        {/* Title */}
         <header className="text-center mb-10">
           <h1 className="text-4xl sm:text-5xl font-bold">Contact Us</h1>
           <div className="w-20 h-1 bg-white/70 mx-auto mt-3 rounded" />
@@ -27,37 +142,63 @@ function Contact() {
           </p>
         </header>
 
-        {/* Grid: form + map */}
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Contact form (glassy card) */}
+          {/* Form */}
           <div className="bg-white/80 backdrop-blur rounded-2xl border border-white/60 shadow p-6 text-slate-900">
             <h2 className="text-xl font-semibold text-slate-900">Send a message</h2>
-            <form className="mt-4 space-y-4" onSubmit={(e) => e.preventDefault()}>
+
+            {/* status bar */}
+            {(status.type || httpsMixedContentHint) && (
+              <div
+                role="alert"
+                aria-live="polite"
+                className={`mt-3 rounded-lg px-3 py-2 text-sm ${
+                  (status.type === "success")
+                    ? "bg-green-100 text-green-800 border border-green-200"
+                    : "bg-red-100 text-red-800 border border-red-200"
+                }`}
+              >
+                {status.type ? status.text : httpsMixedContentHint}
+              </div>
+            )}
+
+            <form className="mt-4 space-y-4" onSubmit={onSubmit}>
               <div className="grid sm:grid-cols-2 gap-3">
                 <input
                   required
                   type="text"
                   placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   className="w-full border border-slate-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-400"
                 />
                 <input
                   required
                   type="text"
                   placeholder="Last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   className="w-full border border-slate-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-400"
                 />
               </div>
+
               <input
                 required
                 type="email"
                 placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full border border-slate-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-400"
               />
+
               <input
                 type="tel"
                 placeholder="Phone (optional)"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 className="w-full border border-slate-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-400"
               />
+
               <div>
                 <textarea
                   rows={5}
@@ -71,8 +212,14 @@ function Contact() {
                 </div>
               </div>
 
-              <button className="w-full sm:w-auto bg-sky-800 text-white px-6 py-2.5 rounded-lg hover:bg-sky-900 transition">
-                Send Message
+              <button
+                type="submit"
+                disabled={loading}
+                className={`w-full sm:w-auto text-white px-6 py-2.5 rounded-lg transition ${
+                  loading ? "bg-slate-400 cursor-not-allowed" : "bg-sky-800 hover:bg-sky-900"
+                }`}
+              >
+                {loading ? "Sending…" : "Send Message"}
               </button>
             </form>
 
@@ -85,7 +232,7 @@ function Contact() {
             </div>
           </div>
 
-          {/* Interactive map (responsive, rounded) */}
+          {/* Map */}
           <div className="bg-white/80 backdrop-blur rounded-2xl border border-white/60 shadow p-3">
             <div className="relative w-full overflow-hidden rounded-xl" style={{ paddingBottom: "56.25%" }}>
               <iframe
@@ -98,7 +245,6 @@ function Contact() {
               />
             </div>
 
-            {/* Map actions */}
             <div className="mt-3 flex flex-wrap gap-3">
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${gmapsQ}`}
@@ -118,7 +264,6 @@ function Contact() {
               </a>
             </div>
 
-            {/* Fallback for very old browsers / no iframes */}
             <noscript>
               <div className="mt-3 text-slate-800">
                 JavaScript is disabled. See directions on{" "}
@@ -136,9 +281,7 @@ function Contact() {
         </div>
       </div>
 
-      {/* Fixed Back/Next with clear labels (optional—keep if you’re still using PageNav) */}
       <PageNav back="/clientportal" backLabel="Back: Client Portal" always />
-
     </div>
   );
 }
