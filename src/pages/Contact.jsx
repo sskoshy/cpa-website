@@ -4,13 +4,13 @@ import PageNav from "../components/PageNav";
 
 /**
  * API base:
- * - Local dev (CRA proxy): set "proxy": "http://localhost:5001" in package.json and leave REACT_APP_API_BASE unset.
- *   => calls go to relative URLs like "/api/contact".
- * - Production (GitHub Pages): set REACT_APP_API_BASE=https://YOUR-BACKEND.onrender.com in .env.production.
- *   => calls are prefixed with that URL.
+ * - Local dev (CRA proxy): put "proxy": "http://localhost:5001" in package.json
+ *   and leave REACT_APP_API_BASE unset → fetch('/api/contact') hits localhost:5001.
+ * - Production (GitHub Pages): set REACT_APP_API_BASE to your Render URL
+ *   (e.g., https://cpa-website.onrender.com) in .env.production.
  */
-const RAW_BASE = (process.env.REACT_APP_API_BASE || "").trim().replace(/\/+$/, "");
-const withBase = (path) => (RAW_BASE ? `${RAW_BASE}${path}` : path);
+const API_BASE = (process.env.REACT_APP_API_BASE || "").trim().replace(/\/+$/, "");
+const withBase = (path) => (API_BASE ? `${API_BASE}${path}` : path);
 
 function Contact() {
   // form state
@@ -26,13 +26,13 @@ function Contact() {
 
   const max = 500;
 
-  // Helpful hint if the site is HTTPS but API base is HTTP (mixed content is blocked)
+  // Helpful hint if the page is HTTPS but API base is HTTP (mixed content is blocked)
   const httpsMixedContentHint = useMemo(() => {
     if (typeof window === "undefined") return "";
     const isHttpsPage = window.location.protocol === "https:";
-    const isHttpApi   = RAW_BASE && RAW_BASE.startsWith("http://");
+    const isHttpApi   = API_BASE && API_BASE.startsWith("http://");
     if (isHttpsPage && isHttpApi) {
-      return "This page is HTTPS but your API base is HTTP. Browsers block mixed content. Use HTTPS for the API or test locally at http://localhost:3000 with a dev proxy.";
+      return "This page is HTTPS but your API base is HTTP. Browsers block mixed content. Use HTTPS for the API or test locally with the dev proxy.";
     }
     return "";
   }, []);
@@ -60,14 +60,10 @@ function Contact() {
     setStatus({ type: null, text: "" });
 
     const problem = validate();
-    if (problem) {
-      setStatus({ type: "error", text: problem });
-      return;
-    }
+    if (problem) return setStatus({ type: "error", text: problem });
 
     if (httpsMixedContentHint) {
-      setStatus({ type: "error", text: httpsMixedContentHint });
-      return;
+      return setStatus({ type: "error", text: httpsMixedContentHint });
     }
 
     const url = withBase("/api/contact");
@@ -93,27 +89,27 @@ function Contact() {
       clearTimeout(timeout);
 
       let data = {};
-      try { data = await res.json(); } catch (_) {}
+      try { data = await res.json(); } catch {}
 
       if (!res.ok) {
         if (res.status === 404) {
-          throw new Error("Not found (404). Ensure server mounts: app.use('/api', submissionsRouter) and the route is POST '/contact'.");
+          throw new Error("Not found (404). Check server has app.use('/api', submissionsRouter) and POST '/contact'.");
         }
         if (res.status === 500) {
           throw new Error(data?.error || "Server error (500). See server logs.");
         }
-        throw new Error(data?.message || data?.error || `Request failed with status ${res.status}.`);
+        throw new Error(data?.message || data?.error || `Request failed: ${res.status}.`);
       }
 
       setStatus({ type: "success", text: "Thanks! Your message was sent. We’ll get back within one business day." });
       reset();
     } catch (err) {
-      const msg =
-        err?.name === "AbortError"
+      setStatus({
+        type: "error",
+        text: err?.name === "AbortError"
           ? "The request timed out. Is the server running?"
-          : (err?.message || "Failed to send message. Check the Network tab for details.");
-      setStatus({ type: "error", text: msg });
-      // console.error("Contact submit error:", err);
+          : (err?.message || "Failed to send message. Check the Network tab.")
+      });
     } finally {
       setLoading(false);
     }
@@ -126,7 +122,6 @@ function Contact() {
       <div className="absolute -bottom-48 -right-32 w-[32rem] h-[32rem] bg-white/10 blur-3xl rounded-full" />
 
       <div className="relative max-w-6xl mx-auto">
-        {/* Title */}
         <header className="text-center mb-10">
           <h1 className="text-4xl sm:text-5xl font-bold">Contact Us</h1>
           <div className="w-20 h-1 bg-white/70 mx-auto mt-3 rounded" />
@@ -135,13 +130,11 @@ function Contact() {
           </p>
         </header>
 
-        {/* Grid: form + map */}
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Contact form */}
           <div className="bg-white/80 backdrop-blur rounded-2xl border border-white/60 shadow p-6 text-slate-900">
             <h2 className="text-xl font-semibold text-slate-900">Send a message</h2>
 
-            {/* Status bar */}
             {(status.type || httpsMixedContentHint) && (
               <div
                 role="alert"
@@ -239,7 +232,6 @@ function Contact() {
               />
             </div>
 
-            {/* Map actions */}
             <div className="mt-3 flex flex-wrap gap-3">
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${gmapsQ}`}
@@ -258,26 +250,10 @@ function Contact() {
                 Directions →
               </a>
             </div>
-
-            {/* Fallback for very old browsers */}
-            <noscript>
-              <div className="mt-3 text-slate-800">
-                JavaScript is disabled. See directions on{" "}
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${gmapsQ}`}
-                  className="underline"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Google Maps
-                </a>.
-              </div>
-            </noscript>
           </div>
         </div>
       </div>
 
-      {/* Navigation */}
       <PageNav back="/clientportal" backLabel="Back: Client Portal" always />
     </div>
   );

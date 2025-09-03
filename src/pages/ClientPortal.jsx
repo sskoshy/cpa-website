@@ -2,17 +2,16 @@
 import { useState } from "react";
 import PageNav from "../components/PageNav";
 
-// Use CRA dev proxy locally: add "proxy": "http://localhost:5001" in frontend/package.json.
-// If you deploy the API, set REACT_APP_API_BASE to the full URL.
-const RAW_BASE = (process.env.REACT_APP_API_BASE || "").replace(/\/+$/, "");
-const api = (p) => (RAW_BASE ? `${RAW_BASE}${p}` : p);
+// One helper for all API calls (works with dev proxy or prod env)
+const API_BASE = (process.env.REACT_APP_API_BASE || "").replace(/\/+$/, "");
+const withBase = (path) => (API_BASE ? `${API_BASE}${path}` : path);
 
 function ClientPortal() {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // added minimal state for portal logic
-  const [email, setEmail] = useState("client@example.com"); // demo defaults
+  // Basic portal state
+  const [email, setEmail] = useState("client@example.com"); // demo creds
   const [password, setPassword] = useState("Passw0rd!");
   const [error, setError] = useState("");
   const [me, setMe] = useState(null);
@@ -22,24 +21,25 @@ function ClientPortal() {
     e?.preventDefault?.();
     setLoading(true);
     setError("");
+
     try {
-      // 1) Login against your simple demo endpoint
-      const res = await fetch(api("/api/portal/login"), {
+      // 1) Login
+      const res = await fetch(withBase("/api/portal/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Login failed");
+      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
       setMe(data.user);
 
-      // 2) Fetch documents list (stubbed)
-      const dRes = await fetch(api("/api/portal/documents"));
-      const dData = await dRes.json();
-      if (!dRes.ok) throw new Error(dData?.error || "Failed to load documents");
-      setDocs(dData.items || []);
+      // 2) Fetch docs
+      const dRes = await fetch(withBase("/api/portal/documents"));
+      const dData = await dRes.json().catch(() => ({}));
+      if (!dRes.ok) throw new Error(dData?.error || `HTTP ${dRes.status}`);
+      setDocs(Array.isArray(dData.items) ? dData.items : []);
     } catch (err) {
-      setError(err.message || "Something went wrong.");
+      setError(err.message || "Login failed");
       setMe(null);
       setDocs([]);
     } finally {
@@ -60,7 +60,6 @@ function ClientPortal() {
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-12 flex items-center justify-center">
         <div className="w-full max-w-md bg-white/80 backdrop-blur rounded-2xl border border-white/60 shadow-lg p-8 text-center text-slate-900">
-          {/* Title */}
           <h1 className="text-3xl font-bold mb-2">Client Portal</h1>
           <p className="text-slate-700 mb-6">Securely access your documents and reports.</p>
 
@@ -72,7 +71,6 @@ function ClientPortal() {
                 </div>
               )}
 
-              {/* Form */}
               <form className="space-y-4" onSubmit={onLogin}>
                 <div className="text-left">
                   <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
@@ -116,7 +114,6 @@ function ClientPortal() {
                 </button>
               </form>
 
-              {/* Helper links */}
               <div className="mt-6 grid gap-2">
                 <button type="button" className="text-sm text-sky-700 hover:underline">
                   Forgot your password?
@@ -141,7 +138,9 @@ function ClientPortal() {
                   {docs.map((d) => (
                     <li key={d.id} className="px-3 py-2 text-sm flex items-center justify-between">
                       <span>{d.name}</span>
-                      <span className="text-slate-500 text-xs">{d.size} • {d.uploadedAt}</span>
+                      <span className="text-slate-500 text-xs">
+                        {d.size} • {d.uploadedAt}
+                      </span>
                     </li>
                   ))}
                   {docs.length === 0 && (
@@ -152,7 +151,6 @@ function ClientPortal() {
             </>
           )}
 
-          {/* Divider + reports CTA (unchanged) */}
           <div className="mt-8 pt-4 border-t border-slate-200">
             <p className="text-sm text-slate-600 mb-1">Need a specific document?</p>
             <button type="button" className="text-sky-700 hover:underline text-sm font-medium">
@@ -162,7 +160,7 @@ function ClientPortal() {
         </div>
       </div>
 
-      {/* Navigation with clear labels — positions unchanged */}
+      {/* Back/Next positions unchanged */}
       <PageNav
         back="/newsroom"
         backLabel="Back: Newsroom"

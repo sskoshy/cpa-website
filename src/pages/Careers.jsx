@@ -5,19 +5,19 @@ import { Link } from "react-router-dom";
 import PageNav from "../components/PageNav";
 
 /**
- * Works in both modes:
- * - Dev proxy: package.json -> "proxy": "http://localhost:5001"
- *   => keep REACT_APP_API_BASE undefined and we call relative URLs ("/api/...").
- * - Env URL: .env -> REACT_APP_API_BASE=http://localhost:5001
- *   => we'll prefix all requests with that base.
+ * API base:
+ * - Local dev with CRA proxy: leave REACT_APP_API_BASE unset and put
+ *   "proxy": "http://localhost:5001" in package.json
+ *   => fetch("/api/...") hits your local server.
+ * - Production: set REACT_APP_API_BASE to "https://cpa-website.onrender.com"
+ *   => fetches go to Render.
  */
 const API_BASE = (process.env.REACT_APP_API_BASE || "").replace(/\/+$/, "");
 const withBase = (path) => (API_BASE ? `${API_BASE}${path}` : path);
 
-
 const DEFAULT_DEPTS = ["All", "Accounting", "Tax", "Audit", "Advisory", "Operations", "Marketing"];
 
-// Simple portal modal so inputs are never blocked by page overlays
+// Simple portal modal
 function Modal({ open, onBackdrop, children }) {
   if (!open) return null;
   return createPortal(
@@ -57,7 +57,7 @@ function Careers() {
   const [submitMsg, setSubmitMsg] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // fetch jobs (supports proxy or absolute base)
+  // fetch jobs
   useEffect(() => {
     (async () => {
       const url = withBase(`/api/jobs`);
@@ -167,19 +167,7 @@ function Careers() {
       <div className="relative max-w-6xl mx-auto px-6 py-12">
         <header className="text-center">
           <h1 className="text-4xl sm:text-5xl font-bold">Join Our Team</h1>
-          <div className="w-20 h-1 bg-white/70 mx-auto mt-3 rounded" />
-          <p className="mt-4 text-white/90 max-w-2xl mx-auto">
-            We value collaboration, growth, and a commitment to excellence. Explore roles and grow with BlueOak.
-          </p>
         </header>
-
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
-          {["Great benefits", "Mentorship", "Hybrid options", "Career mobility"].map((tag) => (
-            <span key={tag} className="text-xs px-3 py-1 rounded-full bg-white/10 border border-white/20">
-              {tag}
-            </span>
-          ))}
-        </div>
 
         {/* Dept filter pills */}
         <div className="mt-8 flex flex-wrap justify-center gap-2">
@@ -224,7 +212,9 @@ function Careers() {
                 <p className="text-sm text-slate-600 mt-1">{job.location || "Remote/Hybrid"}</p>
                 <p className="text-sm text-slate-600">{job.type || "Full-time"}</p>
                 <div className="my-4 h-px bg-slate-200" />
-                <p className="text-slate-800 text-sm leading-relaxed flex-1">{job.description || job.desc}</p>
+                <p className="text-slate-800 text-sm leading-relaxed flex-1">
+                  {job.description || job.desc}
+                </p>
 
                 <div className="mt-5 flex items-center justify-between">
                   <button
@@ -235,7 +225,8 @@ function Careers() {
                     Apply →
                   </button>
                   <span className="text-xs text-slate-500">
-                    Posted · {new Date(job.createdAt || Date.now() - 12096e5).toLocaleDateString()}
+                    Posted ·{" "}
+                    {new Date(job.createdAt || Date.now() - 12096e5).toLocaleDateString()}
                   </span>
                 </div>
               </div>
@@ -246,9 +237,7 @@ function Careers() {
         {/* CTA band */}
         <div className="text-center mt-16 bg-white/80 backdrop-blur p-8 rounded-2xl border border-white/60 shadow text-slate-900">
           <h2 className="text-2xl font-semibold">Not seeing the right role?</h2>
-          <p className="text-slate-700 mt-2">
-            We’re always open to meeting talented people who share our vision.
-          </p>
+          <p className="text-slate-700 mt-2">We’re always open to meeting talented people.</p>
           <Link
             to="/contact"
             className="mt-4 inline-block bg-sky-800 text-white px-6 py-2 rounded-lg shadow hover:bg-sky-900 transition"
@@ -262,7 +251,7 @@ function Careers() {
         </div>
       </div>
 
-      {/* Modal rendered in a portal so inputs are always typeable */}
+      {/* Modal for Apply */}
       <Modal open={open} onBackdrop={closeApply}>
         <div className="flex items-start justify-between mb-4">
           <h3 className="text-xl font-semibold text-slate-900">Apply for {activeJob?.title}</h3>
