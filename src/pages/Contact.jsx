@@ -4,10 +4,10 @@ import PageNav from "../components/PageNav";
 
 /**
  * API base:
- * - Dev proxy (recommended in local dev): leave REACT_APP_API_BASE unset and add
- *   "proxy": "http://localhost:5001" in the frontend package.json
- *   => requests go to relative paths like "/api/contact" and are proxied.
- * - Direct URL: set REACT_APP_API_BASE (e.g. https://your-api.onrender.com)
+ * - Local dev (CRA proxy): set "proxy": "http://localhost:5001" in package.json and leave REACT_APP_API_BASE unset.
+ *   => calls go to relative URLs like "/api/contact".
+ * - Production (GitHub Pages): set REACT_APP_API_BASE=https://YOUR-BACKEND.onrender.com in .env.production.
+ *   => calls are prefixed with that URL.
  */
 const RAW_BASE = (process.env.REACT_APP_API_BASE || "").trim().replace(/\/+$/, "");
 const withBase = (path) => (RAW_BASE ? `${RAW_BASE}${path}` : path);
@@ -26,7 +26,7 @@ function Contact() {
 
   const max = 500;
 
-  // helpful hint if you try to call http from an https page (e.g., GitHub Pages)
+  // Helpful hint if the site is HTTPS but API base is HTTP (mixed content is blocked)
   const httpsMixedContentHint = useMemo(() => {
     if (typeof window === "undefined") return "";
     const isHttpsPage = window.location.protocol === "https:";
@@ -37,6 +37,7 @@ function Contact() {
     return "";
   }, []);
 
+  // Office/map
   const address = "123 Main St, Suite 100, Sacramento, CA 95814";
   const gmapsQ = encodeURIComponent(address);
   const embedSrc =
@@ -58,28 +59,23 @@ function Contact() {
     e.preventDefault();
     setStatus({ type: null, text: "" });
 
-    // local validation first
     const problem = validate();
     if (problem) {
       setStatus({ type: "error", text: problem });
       return;
     }
 
-    // mixed-content guard (common on GitHub Pages)
     if (httpsMixedContentHint) {
       setStatus({ type: "error", text: httpsMixedContentHint });
       return;
     }
 
-    // build URL depending on whether REACT_APP_API_BASE is set
     const url = withBase("/api/contact");
-    console.log("POST /api/contact →", url);
-
     setLoading(true);
+
     try {
-      // add a short timeout to avoid hanging errors
       const controller = new AbortController();
-      const t = setTimeout(() => controller.abort(), 15000);
+      const timeout = setTimeout(() => controller.abort(), 15000);
 
       const res = await fetch(url, {
         method: "POST",
@@ -94,16 +90,14 @@ function Contact() {
         }),
       });
 
-      clearTimeout(t);
+      clearTimeout(timeout);
 
-      // try to parse json, but don't crash if not json
       let data = {};
       try { data = await res.json(); } catch (_) {}
 
       if (!res.ok) {
-        // improve common errors
         if (res.status === 404) {
-          throw new Error("Not found (404). Check that server mounts: app.use('/api', submissionsRouter) and router path is '/contact'.");
+          throw new Error("Not found (404). Ensure server mounts: app.use('/api', submissionsRouter) and the route is POST '/contact'.");
         }
         if (res.status === 500) {
           throw new Error(data?.error || "Server error (500). See server logs.");
@@ -114,14 +108,12 @@ function Contact() {
       setStatus({ type: "success", text: "Thanks! Your message was sent. We’ll get back within one business day." });
       reset();
     } catch (err) {
-      // network-level errors (CORS/offline/timeout) show up as TypeError or AbortError
       const msg =
         err?.name === "AbortError"
           ? "The request timed out. Is the server running?"
           : (err?.message || "Failed to send message. Check the Network tab for details.");
-
       setStatus({ type: "error", text: msg });
-      console.error("Contact submit error:", err);
+      // console.error("Contact submit error:", err);
     } finally {
       setLoading(false);
     }
@@ -129,11 +121,12 @@ function Contact() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-blue-800 to-sky-700 text-white pt-16 px-6 pb-28 relative">
-      {/* soft glows */}
+      {/* background glows */}
       <div className="absolute -top-40 -left-24 w-[28rem] h-[28rem] bg-white/10 blur-3xl rounded-full" />
       <div className="absolute -bottom-48 -right-32 w-[32rem] h-[32rem] bg-white/10 blur-3xl rounded-full" />
 
       <div className="relative max-w-6xl mx-auto">
+        {/* Title */}
         <header className="text-center mb-10">
           <h1 className="text-4xl sm:text-5xl font-bold">Contact Us</h1>
           <div className="w-20 h-1 bg-white/70 mx-auto mt-3 rounded" />
@@ -142,18 +135,19 @@ function Contact() {
           </p>
         </header>
 
+        {/* Grid: form + map */}
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Form */}
+          {/* Contact form */}
           <div className="bg-white/80 backdrop-blur rounded-2xl border border-white/60 shadow p-6 text-slate-900">
             <h2 className="text-xl font-semibold text-slate-900">Send a message</h2>
 
-            {/* status bar */}
+            {/* Status bar */}
             {(status.type || httpsMixedContentHint) && (
               <div
                 role="alert"
                 aria-live="polite"
                 className={`mt-3 rounded-lg px-3 py-2 text-sm ${
-                  (status.type === "success")
+                  status.type === "success"
                     ? "bg-green-100 text-green-800 border border-green-200"
                     : "bg-red-100 text-red-800 border border-red-200"
                 }`}
@@ -245,6 +239,7 @@ function Contact() {
               />
             </div>
 
+            {/* Map actions */}
             <div className="mt-3 flex flex-wrap gap-3">
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${gmapsQ}`}
@@ -264,6 +259,7 @@ function Contact() {
               </a>
             </div>
 
+            {/* Fallback for very old browsers */}
             <noscript>
               <div className="mt-3 text-slate-800">
                 JavaScript is disabled. See directions on{" "}
@@ -281,6 +277,7 @@ function Contact() {
         </div>
       </div>
 
+      {/* Navigation */}
       <PageNav back="/clientportal" backLabel="Back: Client Portal" always />
     </div>
   );

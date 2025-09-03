@@ -11,8 +11,9 @@ import PageNav from "../components/PageNav";
  * - Env URL: .env -> REACT_APP_API_BASE=http://localhost:5001
  *   => we'll prefix all requests with that base.
  */
-const API_BASE = (process.env.REACT_APP_API_BASE || "").replace(/\/+$/, ""); // strip trailing slash
+const API_BASE = (process.env.REACT_APP_API_BASE || "").replace(/\/+$/, "");
 const withBase = (path) => (API_BASE ? `${API_BASE}${path}` : path);
+
 
 const DEFAULT_DEPTS = ["All", "Accounting", "Tax", "Audit", "Advisory", "Operations", "Marketing"];
 
