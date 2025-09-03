@@ -5,6 +5,20 @@ import Job from "../models/Job.js";
 
 const router = express.Router();
 
+const JOBS = [
+  { _id: "demo-1", title: "Staff Accountant", dept: "Accounting", type: "Full-time", location: "Sacramento, CA", description: "Manage client finances, prepare accurate reports, and ensure compliance." },
+  { _id: "demo-2", title: "Tax Associate", dept: "Tax", type: "Full-time", location: "Hybrid · Sacramento, CA", description: "Assist individuals and businesses with tax planning and filing." },
+  { _id: "demo-3", title: "Audit Intern", dept: "Audit", type: "Internship", location: "On-site · Sacramento, CA", description: "Support audit teams with financial reviews and compliance checks." },
+  { _id: "demo-4", title: "Financial Analyst", dept: "Advisory", type: "Full-time", location: "Remote (US)", description: "Analyze data, create forecasts, and provide strategic recommendations." },
+  { _id: "demo-5", title: "HR & Recruitment Coordinator", dept: "Operations", type: "Full-time", location: "Hybrid · Sacramento, CA", description: "Help us find and onboard top talent to grow our team." },
+  { _id: "demo-6", title: "Marketing Intern", dept: "Marketing", type: "Internship", location: "On-site · Sacramento, CA", description: "Assist in campaigns, social content, and brand materials." }
+];
+
+// GET /api/jobs — simplest hard-coded list (no DB)
+router.get("/jobs", (_req, res) => {
+  res.json(JOBS);
+});
+
 console.log("🔌 submissions router loaded"); // TEMP LOG
 
 
