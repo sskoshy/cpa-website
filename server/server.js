@@ -11,13 +11,13 @@ dotenv.config();
 
 const app = express();
 
-app.use(
-  cors({
-    origin: ["http://localhost:3000", "https://sskoshy.github.io"],
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: ["http://localhost:3000", "https://sskoshy.github.io"],
+  credentials: true,
+}));
 app.use(express.json());
+app.use("/api", submissionsRouter);
+
 
 async function connectDB() {
   const uri = process.env.MONGO_URI;

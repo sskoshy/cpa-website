@@ -1,12 +1,11 @@
 // server/src/routes/submissions.js
 import express from "express";
 import Submission from "../models/Submission.js";
-import Job from "../models/Job.js";
 
 const router = express.Router();
 
-
-const JOBS = [
+// Hardcoded demo jobs
+const DEMO_JOBS = [
   { _id: "demo-1", title: "Staff Accountant", dept: "Accounting", type: "Full-time", location: "Sacramento, CA", description: "Manage client finances, prepare accurate reports, and ensure compliance." },
   { _id: "demo-2", title: "Tax Associate", dept: "Tax", type: "Full-time", location: "Hybrid · Sacramento, CA", description: "Assist individuals and businesses with tax planning and filing." },
   { _id: "demo-3", title: "Audit Intern", dept: "Audit", type: "Internship", location: "On-site · Sacramento, CA", description: "Support audit teams with financial reviews and compliance checks." },
@@ -15,50 +14,25 @@ const JOBS = [
   { _id: "demo-6", title: "Marketing Intern", dept: "Marketing", type: "Internship", location: "On-site · Sacramento, CA", description: "Assist in campaigns, social content, and brand materials." }
 ];
 
-// GET /api/jobs — simplest hard-coded list (no DB)
-router.get("/jobs", (_req, res) => {
-  res.json(JOBS);
-});
-
-console.log("🔌 submissions router loaded"); // TEMP LOG
-
-
-/**
- * GET /api/jobs
- */
-router.get("/jobs", async (_req, res) => {
-  try {
-    const jobs = await Job.find({}).sort({ createdAt: -1 });
-    res.json(jobs);
-  } catch (err) {
-    console.error("Jobs list error:", err);
-    res.status(500).json({ error: "Failed to fetch jobs" });
-  }
-});
-
-/**
- * POST /api/jobs
- * Create a new job (used by the seed script)
- */
-router.post("/jobs", async (req, res) => {
-  try {
-    const job = await Job.create(req.body);
-    res.status(201).json(job);
-  } catch (err) {
-    console.error("Create job error:", err);
-    res.status(400).json({ error: err.message || "Failed to create job" });
-  }
-});
-
+// Health check
 router.get("/health", (_req, res) => res.json({ ok: true }));
 
-// Save contact form
+// Jobs list (frontend calls this)
+router.get("/jobs", (_req, res) => {
+  res.json(DEMO_JOBS);
+});
+
+// Contact form submission
 router.post("/contact", async (req, res) => {
   try {
-    const { name, email, phone, message, interest, source } = req.body;
+    const { name, email, phone, message, interest, source } = req.body || {};
     const doc = await Submission.create({
       kind: "contact",
-      name, email, phone, message, interest,
+      name,
+      email,
+      phone,
+      message,
+      interest,
       source: source || "contact-form",
     });
     res.status(201).json({ ok: true, id: doc._id });
@@ -68,13 +42,13 @@ router.post("/contact", async (req, res) => {
   }
 });
 
-// Save careers application
+// Careers application
 router.post("/applications", async (req, res) => {
   try {
     const {
       name, email, phone, coverLetter, role, jobId, linkedin, portfolio,
       firstName, lastName, linkedIn,
-    } = req.body;
+    } = req.body || {};
 
     const finalName =
       (name && name.trim()) ||
@@ -102,17 +76,21 @@ router.post("/applications", async (req, res) => {
   }
 });
 
-// Quick dev check: list recent submissions
+// List recent submissions (for quick dev checks)
 router.get("/submissions", async (_req, res) => {
-  const items = await Submission.find().sort({ createdAt: -1 }).limit(50);
-  res.json({ ok: true, items });
+  try {
+    const items = await Submission.find().sort({ createdAt: -1 }).limit(50).lean();
+    res.json({ ok: true, items });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: "Failed to fetch submissions." });
+  }
 });
 
-// POST /api/portal/login (because the router is mounted at /api)
+// Client portal demo login
 router.post("/portal/login", (req, res) => {
   const { email, password } = req.body || {};
   const DEMO_EMAIL = process.env.DEMO_CLIENT_EMAIL || "client@example.com";
-  const DEMO_PASS  = process.env.DEMO_CLIENT_PASSWORD || "Passw0rd!";
+  const DEMO_PASS = process.env.DEMO_CLIENT_PASSWORD || "Passw0rd!";
 
   if (!email || !password) {
     return res.status(400).json({ ok: false, error: "Email and password required" });
@@ -123,7 +101,7 @@ router.post("/portal/login", (req, res) => {
   return res.json({ ok: true, user: { email: DEMO_EMAIL } });
 });
 
-// GET /api/portal/documents
+// Client portal documents
 router.get("/portal/documents", (_req, res) => {
   res.json({
     ok: true,
