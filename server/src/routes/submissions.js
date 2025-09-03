@@ -5,6 +5,7 @@ import Job from "../models/Job.js";
 
 const router = express.Router();
 
+
 const JOBS = [
   { _id: "demo-1", title: "Staff Accountant", dept: "Accounting", type: "Full-time", location: "Sacramento, CA", description: "Manage client finances, prepare accurate reports, and ensure compliance." },
   { _id: "demo-2", title: "Tax Associate", dept: "Tax", type: "Full-time", location: "Hybrid · Sacramento, CA", description: "Assist individuals and businesses with tax planning and filing." },
