@@ -2,7 +2,7 @@
 import { useState } from "react";
 import PageNav from "../components/PageNav";
 
-// One helper for all API calls (works with dev proxy or prod env)
+// API helper (works with dev proxy or prod env)
 const API_BASE = (process.env.REACT_APP_API_BASE || "").replace(/\/+$/, "");
 const withBase = (path) => (API_BASE ? `${API_BASE}${path}` : path);
 
@@ -10,31 +10,30 @@ function ClientPortal() {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // login state
+  // Auth + data
   const [email, setEmail] = useState("client@example.com"); // demo creds
   const [password, setPassword] = useState("Passw0rd!");
   const [error, setError] = useState("");
   const [me, setMe] = useState(null);
   const [docs, setDocs] = useState([]);
 
-  // helper link mini-forms
-  const [showForgot, setShowForgot] = useState(false);
-  const [showAccessReq, setShowAccessReq] = useState(false);
+  // Reports
+  const [reports, setReports] = useState([]);
+  const [reportsError, setReportsError] = useState("");
+  const [reportsLoading, setReportsLoading] = useState(false);
   const [showReports, setShowReports] = useState(false);
 
-  // forgot form
+  // Forgot password
+  const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotMsg, setForgotMsg] = useState("");
 
-  // request access form
+  // Request access
+  const [showAccessReq, setShowAccessReq] = useState(false);
   const [reqName, setReqName] = useState("");
   const [reqCompany, setReqCompany] = useState("");
   const [reqEmail, setReqEmail] = useState("");
   const [accessMsg, setAccessMsg] = useState("");
-
-  // reports (simple list)
-  const [reports, setReports] = useState([]);
-  const [reportsMsg, setReportsMsg] = useState("");
 
   const onLogin = async (e) => {
     e?.preventDefault?.();
@@ -42,7 +41,6 @@ function ClientPortal() {
     setError("");
 
     try {
-      // 1) Login
       const res = await fetch(withBase("/api/portal/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -52,7 +50,6 @@ function ClientPortal() {
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
       setMe(data.user);
 
-      // 2) Fetch docs
       const dRes = await fetch(withBase("/api/portal/documents"));
       const dData = await dRes.json().catch(() => ({}));
       if (!dRes.ok) throw new Error(dData?.error || `HTTP ${dRes.status}`);
@@ -69,9 +66,11 @@ function ClientPortal() {
   const onLogout = () => {
     setMe(null);
     setDocs([]);
+    setReports([]);
+    setShowReports(false);
+    setReportsError("");
   };
 
-  // forgot password flow
   const submitForgot = async (e) => {
     e?.preventDefault?.();
     setForgotMsg("");
@@ -90,7 +89,6 @@ function ClientPortal() {
     }
   };
 
-  // request portal access flow
   const submitAccessReq = async (e) => {
     e?.preventDefault?.();
     setAccessMsg("");
@@ -113,18 +111,20 @@ function ClientPortal() {
     }
   };
 
-  // access reports flow
-  const loadReports = async () => {
-    setReportsMsg("");
+  const onLoadReports = async () => {
+    setReportsLoading(true);
+    setReportsError("");
+    setShowReports(true);
     try {
       const res = await fetch(withBase("/api/portal/reports"));
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
       setReports(Array.isArray(data.items) ? data.items : []);
-      setShowReports(true);
     } catch (err) {
-      setReportsMsg(err.message || "Failed to load reports.");
-      setShowReports(true);
+      setReports([]);
+      setReportsError(err.message || "Failed to load reports");
+    } finally {
+      setReportsLoading(false);
     }
   };
 
@@ -155,7 +155,7 @@ function ClientPortal() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@company.com"
-                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    className="w-full px-4 py-2 rounded-lg border border-slate-300"
                     required
                   />
                 </div>
@@ -168,7 +168,7 @@ function ClientPortal() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 pr-20"
+                      className="w-full px-4 py-2 rounded-lg border border-slate-300 pr-20"
                       required
                     />
                     <button
@@ -190,7 +190,7 @@ function ClientPortal() {
                 </button>
               </form>
 
-              {/* Helper links + inline mini-forms */}
+              {/* Helpers */}
               <div className="mt-6 grid gap-3 text-left">
                 {/* Forgot password */}
                 <div>
@@ -211,15 +211,10 @@ function ClientPortal() {
                         className="w-full px-3 py-2 rounded border border-slate-300"
                         required
                       />
-                      <button
-                        type="submit"
-                        className="px-3 py-1.5 rounded bg-sky-700 text-white hover:bg-sky-800 text-sm"
-                      >
+                      <button className="px-3 py-1.5 rounded bg-sky-700 text-white text-sm">
                         Send reset link
                       </button>
-                      {forgotMsg && (
-                        <div className="text-xs mt-1 text-slate-600">{forgotMsg}</div>
-                      )}
+                      {forgotMsg && <div className="text-xs mt-1 text-slate-600">{forgotMsg}</div>}
                     </form>
                   )}
                 </div>
@@ -258,15 +253,10 @@ function ClientPortal() {
                         className="w-full px-3 py-2 rounded border border-slate-300"
                         required
                       />
-                      <button
-                        type="submit"
-                        className="px-3 py-1.5 rounded bg-sky-700 text-white hover:bg-sky-800 text-sm"
-                      >
+                      <button className="px-3 py-1.5 rounded bg-sky-700 text-white text-sm">
                         Submit request
                       </button>
-                      {accessMsg && (
-                        <div className="text-xs mt-1 text-slate-600">{accessMsg}</div>
-                      )}
+                      {accessMsg && <div className="text-xs mt-1 text-slate-600">{accessMsg}</div>}
                     </form>
                   )}
                 </div>
@@ -274,6 +264,7 @@ function ClientPortal() {
             </>
           ) : (
             <>
+              {/* AFTER LOGIN */}
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Welcome, {me.email}</h2>
                 <button onClick={onLogout} className="text-sm text-sky-700 hover:underline">
@@ -281,15 +272,13 @@ function ClientPortal() {
                 </button>
               </div>
 
-              <div className="bg-white rounded border border-slate-200 text-left">
+              <div className="bg-white rounded border border-slate-200 text-left mb-6">
                 <div className="px-3 py-2 border-b border-slate-200 font-medium">Your documents</div>
                 <ul className="divide-y divide-slate-200">
                   {docs.map((d) => (
-                    <li key={d.id} className="px-3 py-2 text-sm flex items-center justify-between">
+                    <li key={d.id} className="px-3 py-2 text-sm flex justify-between">
                       <span>{d.name}</span>
-                      <span className="text-slate-500 text-xs">
-                        {d.size} • {d.uploadedAt}
-                      </span>
+                      <span className="text-slate-500 text-xs">{d.size} • {d.uploadedAt}</span>
                     </li>
                   ))}
                   {docs.length === 0 && (
@@ -298,33 +287,33 @@ function ClientPortal() {
                 </ul>
               </div>
 
-              {/* Reports CTA */}
-              <div className="mt-6 text-left">
+              {/* SINGLE reports link — only visible after login */}
+              <div className="text-left">
                 <button
                   type="button"
-                  onClick={loadReports}
+                  onClick={() => { setShowReports(true); onLoadReports(); }}
                   className="text-sky-700 hover:underline text-sm font-medium"
                 >
                   Access your reports
                 </button>
+
                 {showReports && (
                   <div className="mt-2 bg-white rounded border border-slate-200">
                     <div className="px-3 py-2 border-b border-slate-200 font-medium">Reports</div>
-                    {reportsMsg && (
-                      <div className="px-3 py-2 text-sm text-red-700 bg-red-50 border-b border-red-100">
-                        {reportsMsg}
-                      </div>
+                    {reportsLoading && <div className="px-3 py-3 text-sm">Loading…</div>}
+                    {reportsError && (
+                      <div className="px-3 py-2 text-sm text-red-700 bg-red-50">{reportsError}</div>
                     )}
                     <ul className="divide-y divide-slate-200">
                       {reports.map((r) => (
-                        <li key={r.id} className="px-3 py-2 text-sm flex items-center justify-between">
+                        <li key={r.id} className="px-3 py-2 text-sm flex justify-between">
                           <span>{r.name}</span>
                           <span className="text-slate-500 text-xs">
-                            {r.size || "—"} {r.generatedAt ? `• ${r.generatedAt}` : ""}
+                            {(r.size || "—")}{r.generatedAt ? ` • ${r.generatedAt}` : ""}
                           </span>
                         </li>
                       ))}
-                      {reports.length === 0 && (
+                      {reports.length === 0 && !reportsLoading && !reportsError && (
                         <li className="px-3 py-3 text-sm text-slate-500">No reports available.</li>
                       )}
                     </ul>
@@ -333,25 +322,11 @@ function ClientPortal() {
               </div>
             </>
           )}
-
-          {/* Divider (kept) */}
-          <div className="mt-8 pt-4 border-t border-slate-200">
-            <p className="text-sm text-slate-600 mb-1">Need a specific document?</p>
-            <button type="button" onClick={loadReports} className="text-sky-700 hover:underline text-sm font-medium">
-              Access your reports
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* Back/Next positions unchanged */}
-      <PageNav
-        back="/newsroom"
-        backLabel="Back: Newsroom"
-        next="/contact"
-        nextLabel="Next: Contact"
-        always
-      />
+      {/* Back/Next stays put */}
+      <PageNav back="/newsroom" backLabel="Back: Newsroom" next="/contact" nextLabel="Next: Contact" always />
     </div>
   );
 }
