@@ -10,12 +10,31 @@ function ClientPortal() {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Basic portal state
+  // login state
   const [email, setEmail] = useState("client@example.com"); // demo creds
   const [password, setPassword] = useState("Passw0rd!");
   const [error, setError] = useState("");
   const [me, setMe] = useState(null);
   const [docs, setDocs] = useState([]);
+
+  // helper link mini-forms
+  const [showForgot, setShowForgot] = useState(false);
+  const [showAccessReq, setShowAccessReq] = useState(false);
+  const [showReports, setShowReports] = useState(false);
+
+  // forgot form
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotMsg, setForgotMsg] = useState("");
+
+  // request access form
+  const [reqName, setReqName] = useState("");
+  const [reqCompany, setReqCompany] = useState("");
+  const [reqEmail, setReqEmail] = useState("");
+  const [accessMsg, setAccessMsg] = useState("");
+
+  // reports (simple list)
+  const [reports, setReports] = useState([]);
+  const [reportsMsg, setReportsMsg] = useState("");
 
   const onLogin = async (e) => {
     e?.preventDefault?.();
@@ -50,6 +69,63 @@ function ClientPortal() {
   const onLogout = () => {
     setMe(null);
     setDocs([]);
+  };
+
+  // forgot password flow
+  const submitForgot = async (e) => {
+    e?.preventDefault?.();
+    setForgotMsg("");
+    try {
+      const res = await fetch(withBase("/api/portal/forgot"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+      setForgotMsg("If that email exists, we’ve sent reset instructions.");
+      setForgotEmail("");
+    } catch (err) {
+      setForgotMsg(err.message || "Failed to submit request.");
+    }
+  };
+
+  // request portal access flow
+  const submitAccessReq = async (e) => {
+    e?.preventDefault?.();
+    setAccessMsg("");
+    try {
+      const res = await fetch(withBase("/api/portal/request-access"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: reqName.trim(),
+          company: reqCompany.trim() || undefined,
+          email: reqEmail.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+      setAccessMsg("Thanks! We’ll review and get you set up.");
+      setReqName(""); setReqCompany(""); setReqEmail("");
+    } catch (err) {
+      setAccessMsg(err.message || "Failed to request access.");
+    }
+  };
+
+  // access reports flow
+  const loadReports = async () => {
+    setReportsMsg("");
+    try {
+      const res = await fetch(withBase("/api/portal/reports"));
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+      setReports(Array.isArray(data.items) ? data.items : []);
+      setShowReports(true);
+    } catch (err) {
+      setReportsMsg(err.message || "Failed to load reports.");
+      setShowReports(true);
+    }
   };
 
   return (
@@ -114,13 +190,86 @@ function ClientPortal() {
                 </button>
               </form>
 
-              <div className="mt-6 grid gap-2">
-                <button type="button" className="text-sm text-sky-700 hover:underline">
-                  Forgot your password?
-                </button>
-                <button type="button" className="text-sm text-sky-700 hover:underline">
-                  Request portal access
-                </button>
+              {/* Helper links + inline mini-forms */}
+              <div className="mt-6 grid gap-3 text-left">
+                {/* Forgot password */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowForgot((v) => !v)}
+                    className="text-sm text-sky-700 hover:underline"
+                  >
+                    Forgot your password?
+                  </button>
+                  {showForgot && (
+                    <form onSubmit={submitForgot} className="mt-2 space-y-2">
+                      <input
+                        type="email"
+                        placeholder="you@company.com"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        className="w-full px-3 py-2 rounded border border-slate-300"
+                        required
+                      />
+                      <button
+                        type="submit"
+                        className="px-3 py-1.5 rounded bg-sky-700 text-white hover:bg-sky-800 text-sm"
+                      >
+                        Send reset link
+                      </button>
+                      {forgotMsg && (
+                        <div className="text-xs mt-1 text-slate-600">{forgotMsg}</div>
+                      )}
+                    </form>
+                  )}
+                </div>
+
+                {/* Request portal access */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAccessReq((v) => !v)}
+                    className="text-sm text-sky-700 hover:underline"
+                  >
+                    Request portal access
+                  </button>
+                  {showAccessReq && (
+                    <form onSubmit={submitAccessReq} className="mt-2 space-y-2">
+                      <input
+                        type="text"
+                        placeholder="Full name"
+                        value={reqName}
+                        onChange={(e) => setReqName(e.target.value)}
+                        className="w-full px-3 py-2 rounded border border-slate-300"
+                        required
+                      />
+                      <input
+                        type="text"
+                        placeholder="Company (optional)"
+                        value={reqCompany}
+                        onChange={(e) => setReqCompany(e.target.value)}
+                        className="w-full px-3 py-2 rounded border border-slate-300"
+                      />
+                      <input
+                        type="email"
+                        placeholder="you@company.com"
+                        value={reqEmail}
+                        onChange={(e) => setReqEmail(e.target.value)}
+                        className="w-full px-3 py-2 rounded border border-slate-300"
+                        required
+                      />
+                      <button
+                        type="submit"
+                        className="px-3 py-1.5 rounded bg-sky-700 text-white hover:bg-sky-800 text-sm"
+                      >
+                        Submit request
+                      </button>
+                      {accessMsg && (
+                        <div className="text-xs mt-1 text-slate-600">{accessMsg}</div>
+                      )}
+                    </form>
+                  )}
+                </div>
               </div>
             </>
           ) : (
@@ -148,12 +297,47 @@ function ClientPortal() {
                   )}
                 </ul>
               </div>
+
+              {/* Reports CTA */}
+              <div className="mt-6 text-left">
+                <button
+                  type="button"
+                  onClick={loadReports}
+                  className="text-sky-700 hover:underline text-sm font-medium"
+                >
+                  Access your reports
+                </button>
+                {showReports && (
+                  <div className="mt-2 bg-white rounded border border-slate-200">
+                    <div className="px-3 py-2 border-b border-slate-200 font-medium">Reports</div>
+                    {reportsMsg && (
+                      <div className="px-3 py-2 text-sm text-red-700 bg-red-50 border-b border-red-100">
+                        {reportsMsg}
+                      </div>
+                    )}
+                    <ul className="divide-y divide-slate-200">
+                      {reports.map((r) => (
+                        <li key={r.id} className="px-3 py-2 text-sm flex items-center justify-between">
+                          <span>{r.name}</span>
+                          <span className="text-slate-500 text-xs">
+                            {r.size || "—"} {r.generatedAt ? `• ${r.generatedAt}` : ""}
+                          </span>
+                        </li>
+                      ))}
+                      {reports.length === 0 && (
+                        <li className="px-3 py-3 text-sm text-slate-500">No reports available.</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </>
           )}
 
+          {/* Divider (kept) */}
           <div className="mt-8 pt-4 border-t border-slate-200">
             <p className="text-sm text-slate-600 mb-1">Need a specific document?</p>
-            <button type="button" className="text-sky-700 hover:underline text-sm font-medium">
+            <button type="button" onClick={loadReports} className="text-sky-700 hover:underline text-sm font-medium">
               Access your reports
             </button>
           </div>
