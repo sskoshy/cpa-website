@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/cpa-website/static/css/main.b7f44ec5.css",
-    "main.js": "/cpa-website/static/js/main.75f97fda.js",
+    "main.css": "/cpa-website/static/css/main.29544393.css",
+    "main.js": "/cpa-website/static/js/main.b94ef11e.js",
     "static/js/453.186e2cac.chunk.js": "/cpa-website/static/js/453.186e2cac.chunk.js",
     "index.html": "/cpa-website/index.html",
-    "main.b7f44ec5.css.map": "/cpa-website/static/css/main.b7f44ec5.css.map",
-    "main.75f97fda.js.map": "/cpa-website/static/js/main.75f97fda.js.map",
+    "main.29544393.css.map": "/cpa-website/static/css/main.29544393.css.map",
+    "main.b94ef11e.js.map": "/cpa-website/static/js/main.b94ef11e.js.map",
     "453.186e2cac.chunk.js.map": "/cpa-website/static/js/453.186e2cac.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.b7f44ec5.css",
-    "static/js/main.75f97fda.js"
+    "static/css/main.29544393.css",
+    "static/js/main.b94ef11e.js"
   ]
 }
