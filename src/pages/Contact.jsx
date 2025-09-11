@@ -9,7 +9,7 @@ import PageNav from "../components/PageNav";
  * - Production (GitHub Pages): set REACT_APP_API_BASE to your Render URL
  *   (e.g., https://cpa-website.onrender.com) in .env.production.
  */
-const API_BASE = (process.env.REACT_APP_API_BASE || "").trim().replace(/\/+$/, "");
+const API_BASE = ""; // same-origin; avoids mixed-content & CORS
 const withBase = (path) => (API_BASE ? `${API_BASE}${path}` : path);
 
 function Contact() {

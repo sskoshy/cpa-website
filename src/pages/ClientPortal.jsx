@@ -3,7 +3,7 @@ import { useState } from "react";
 import PageNav from "../components/PageNav";
 
 // API helper (works with dev proxy or prod env)
-const API_BASE = (process.env.REACT_APP_API_BASE || "").replace(/\/+$/, "");
+const API_BASE = ""; // same-origin
 const withBase = (path) => (API_BASE ? `${API_BASE}${path}` : path);
 
 function ClientPortal() {

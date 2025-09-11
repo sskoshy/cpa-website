@@ -2,8 +2,9 @@
 import { useEffect, useMemo, useState } from "react";
 import PageNav from "../components/PageNav";
 
-const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5001";
-// Move constant outside component
+const API_BASE = ""; // same-origin so it hits /api/articles on your Vercel site
+const withBase = (p) => (API_BASE ? `${API_BASE}${p}` : p);// Move constant outside component
+
 const DEFAULT_CATS = ["All", "Tax", "Audit", "Consulting"];
 
 function Newsroom() {
@@ -16,7 +17,7 @@ function Newsroom() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/articles`);
+        const res = await fetch(withBase("/api/articles"));
         const data = await res.json();
         const arr = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
         const norm = arr.map(a => ({

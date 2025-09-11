@@ -12,7 +12,7 @@ import PageNav from "../components/PageNav";
  * - Production: set REACT_APP_API_BASE to "https://cpa-website.onrender.com"
  *   => fetches go to Render.
  */
-const API_BASE = (process.env.REACT_APP_API_BASE || "").replace(/\/+$/, "");
+const API_BASE = ""; // use same-origin so requests go to /api/* on your Vercel site
 const withBase = (path) => (API_BASE ? `${API_BASE}${path}` : path);
 
 const DEFAULT_DEPTS = ["All", "Accounting", "Tax", "Audit", "Advisory", "Operations", "Marketing"];
