@@ -1,5 +1,5 @@
 // src/App.js
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
@@ -14,11 +14,8 @@ import Newsroom from "./pages/Newsroom";
 import Contact from "./pages/Contact";
 
 function App() {
-  // Basename for GitHub Pages; "/" for local dev
-  const basename = process.env.NODE_ENV === "production" ? "/cpa-website" : "/";
-
   return (
-    <Router basename={basename}>
+    <Router>
       <ScrollToTop />
       <Navbar />
       <Routes>
@@ -30,9 +27,9 @@ function App() {
         <Route path="/clientportal" element={<ClientPortal />} />
         <Route path="/newsroom" element={<Newsroom />} />
         <Route path="/contact" element={<Contact />} />
+        {/* catch-all: go home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      {/* Global footer appears once across the site */}
       <Footer />
     </Router>
   );
